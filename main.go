@@ -34,6 +34,15 @@ var points = []point{
 	{1, -1, -1},
 	{-1, -1, -1},
 	{-1, 1, -1},
+
+	{4, 1, 1},
+	{4, -1, 1},
+	{2, -1, 1},
+	{2, 1, 1},
+	{4, 1, -1},
+	{4, -1, -1},
+	{2, -1, -1},
+	{2, 1, -1},
 }
 
 var lines = []line{
@@ -49,6 +58,19 @@ var lines = []line{
 	{1, 5},
 	{2, 6},
 	{3, 7},
+
+	{8, 9},
+	{9, 10},
+	{10, 11},
+	{11, 8},
+	{12, 13},
+	{13, 14},
+	{14, 15},
+	{15, 12},
+	{8, 12},
+	{9, 13},
+	{10, 14},
+	{11, 15},
 }
 
 var xangle = float64(0)
@@ -68,7 +90,7 @@ func frame() image.Image {
 		point = rotateY(point, yangle)
 		point = rotateZ(point, zangle)
 		point = perspective(point)
-		point = scale(point, 200)
+		point = scale(point, 100)
 		point = move(point, width, height)
 		updatedPoints = append(updatedPoints, point)
 	}

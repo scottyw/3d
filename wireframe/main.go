@@ -1,13 +1,11 @@
 package main
 
 import (
-	"image"
-	"image/color"
 	"math"
 
-	"github.com/fogleman/gg"
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
+	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"golang.org/x/image/colornames"
 )
 
@@ -79,10 +77,10 @@ var yangle = float64(0)
 
 var zangle = float64(0)
 
-func frame() image.Image {
-	dc := gg.NewContext(int(width), int(height))
-	dc.SetColor(colornames.Lawngreen)
-	dc.SetLineWidth(2)
+func frame() *imdraw.IMDraw {
+
+	imd := imdraw.New(nil)
+	imd.Color = colornames.Lawngreen
 
 	updatedPoints := []point{}
 	for _, point := range points {
@@ -98,15 +96,18 @@ func frame() image.Image {
 	for _, line := range lines {
 		p1 := updatedPoints[line.p1]
 		p2 := updatedPoints[line.p2]
-		dc.DrawLine(p1.x, p1.y, p2.x, p2.y)
+
+		imd.Push(pixel.V(p1.x, p1.y))
+		imd.Push(pixel.V(p2.x, p2.y))
+		imd.Line(2)
+
 	}
 
 	xangle += 0.003
 	yangle += 0.005
 	zangle += 0.007
 
-	dc.Stroke()
-	return dc.Image()
+	return imd
 }
 
 func scale(p point, s float64) point {
@@ -178,27 +179,19 @@ func run() {
 		Undecorated: true,
 	}
 
-	// fullscreen
-	// cfg.Monitor = opengl.PrimaryMonitor()
+	// cfg.Monitor = opengl.PrimaryMonitor() // fullscreen
 
 	win, err := opengl.NewWindow(cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	c := win.Bounds().Center()
-
 	for !win.Closed() {
 		if win.JustPressed(pixel.KeyEscape) || win.JustPressed(pixel.KeyQ) {
 			return
 		}
-
-		win.Clear(color.Black)
-
-		p := pixel.PictureDataFromImage(frame())
-
-		pixel.NewSprite(p, p.Bounds()).Draw(win, pixel.IM.Moved(c))
-
+		win.Clear(colornames.Black)
+		frame().Draw(win)
 		win.Update()
 	}
 }

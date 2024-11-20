@@ -11,8 +11,8 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-var height = 1000
-var width = 1000
+var height = float64(1000)
+var width = float64(1000)
 
 type point struct {
 	x float64
@@ -58,25 +58,25 @@ var yangle = float64(0)
 var zangle = float64(0)
 
 func frame() image.Image {
-	dc := gg.NewContext(width, height)
-	dc.SetColor(colornames.Palevioletred)
+	dc := gg.NewContext(int(width), int(height))
+	dc.SetColor(colornames.Lawngreen)
 	dc.SetLineWidth(2)
-	scale := float64(200)
-	xoffset := float64(width / 2)
-	yoffset := float64(height / 2)
 
-	rotatedPoints := []point{}
+	updatedPoints := []point{}
 	for _, point := range points {
 		point = rotateX(point, xangle)
 		point = rotateY(point, yangle)
 		point = rotateZ(point, zangle)
-		rotatedPoints = append(rotatedPoints, point)
+		point = perspective(point)
+		point = scale(point, 200)
+		point = move(point, width, height)
+		updatedPoints = append(updatedPoints, point)
 	}
 
 	for _, line := range lines {
-		p1 := rotatedPoints[line.p1]
-		p2 := rotatedPoints[line.p2]
-		dc.DrawLine(p1.x*scale+xoffset, p1.y*scale+yoffset, p2.x*scale+xoffset, p2.y*scale+yoffset)
+		p1 := updatedPoints[line.p1]
+		p2 := updatedPoints[line.p2]
+		dc.DrawLine(p1.x, p1.y, p2.x, p2.y)
 	}
 
 	xangle += 0.003
@@ -85,6 +85,38 @@ func frame() image.Image {
 
 	dc.Stroke()
 	return dc.Image()
+}
+
+func scale(p point, s float64) point {
+	return point{
+		p.x * s,
+		p.y * s,
+		p.z * s,
+	}
+}
+
+func move(p point, w, h float64) point {
+	return point{
+		p.x + w/2,
+		p.y + h/2,
+		p.z,
+	}
+}
+
+func perspective(p point) point {
+	if p.z >= 5 {
+		return point{
+			p.x,
+			p.y,
+			0,
+		}
+	}
+	z := (3 / (5 - p.z))
+	return point{
+		p.x * z,
+		p.y * z,
+		0,
+	}
 }
 
 func rotateX(p point, theta float64) point {

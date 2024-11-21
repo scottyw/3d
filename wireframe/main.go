@@ -9,8 +9,8 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-var height = float64(1000)
-var width = float64(1000)
+var height = 1000
+var width = 1000
 
 type point struct {
 	x float64
@@ -23,59 +23,52 @@ type line struct {
 	p2 int
 }
 
-var points = []point{
-	{1, 1, 1},
-	{1, -1, 1},
-	{-1, -1, 1},
-	{-1, 1, 1},
-	{1, 1, -1},
-	{1, -1, -1},
-	{-1, -1, -1},
-	{-1, 1, -1},
+var points = []point{}
 
-	{4, 1, 1},
-	{4, -1, 1},
-	{2, -1, 1},
-	{2, 1, 1},
-	{4, 1, -1},
-	{4, -1, -1},
-	{2, -1, -1},
-	{2, 1, -1},
-}
-
-var lines = []line{
-	{0, 1},
-	{1, 2},
-	{2, 3},
-	{3, 0},
-	{4, 5},
-	{5, 6},
-	{6, 7},
-	{7, 4},
-	{0, 4},
-	{1, 5},
-	{2, 6},
-	{3, 7},
-
-	{8, 9},
-	{9, 10},
-	{10, 11},
-	{11, 8},
-	{12, 13},
-	{13, 14},
-	{14, 15},
-	{15, 12},
-	{8, 12},
-	{9, 13},
-	{10, 14},
-	{11, 15},
-}
+var lines = []line{}
 
 var xangle = float64(0)
 
 var yangle = float64(0)
 
 var zangle = float64(0)
+
+func init() {
+	addCuboid(-100, -100, -100, 100, 100, 100)
+
+	addCuboid(200, -100, -100, 300, 100, 100)
+	addCuboid(-100, 200, -100, 100, 300, 100)
+	addCuboid(-100, -100, 200, 100, 100, 300)
+
+	addCuboid(-200, -100, -100, -300, 100, 100)
+	addCuboid(-100, -200, -100, 100, -300, 100)
+	addCuboid(-100, -100, -200, 100, 100, -300)
+
+}
+
+func addCuboid(x1, y1, z1, x2, y2, z2 float64) {
+	i := len(points)
+	points = append(points, point{x1, y1, z1})
+	points = append(points, point{x2, y1, z1})
+	points = append(points, point{x2, y2, z1})
+	points = append(points, point{x1, y2, z1})
+	points = append(points, point{x1, y1, z2})
+	points = append(points, point{x2, y1, z2})
+	points = append(points, point{x2, y2, z2})
+	points = append(points, point{x1, y2, z2})
+	lines = append(lines, line{i, i + 1})
+	lines = append(lines, line{i + 1, i + 2})
+	lines = append(lines, line{i + 2, i + 3})
+	lines = append(lines, line{i + 3, i + 0})
+	lines = append(lines, line{i + 4, i + 5})
+	lines = append(lines, line{i + 5, i + 6})
+	lines = append(lines, line{i + 6, i + 7})
+	lines = append(lines, line{i + 7, i + 4})
+	lines = append(lines, line{i + 0, i + 4})
+	lines = append(lines, line{i + 1, i + 5})
+	lines = append(lines, line{i + 2, i + 6})
+	lines = append(lines, line{i + 3, i + 7})
+}
 
 func frame() *imdraw.IMDraw {
 
@@ -88,8 +81,7 @@ func frame() *imdraw.IMDraw {
 		point = rotateY(point, yangle)
 		point = rotateZ(point, zangle)
 		point = perspective(point)
-		point = scale(point, 100)
-		point = move(point, width, height)
+		point = center(point)
 		updatedPoints = append(updatedPoints, point)
 	}
 
@@ -110,34 +102,20 @@ func frame() *imdraw.IMDraw {
 	return imd
 }
 
-func scale(p point, s float64) point {
+func center(p point) point {
 	return point{
-		p.x * s,
-		p.y * s,
-		p.z * s,
-	}
-}
-
-func move(p point, w, h float64) point {
-	return point{
-		p.x + w/2,
-		p.y + h/2,
+		p.x + float64(width)/2,
+		p.y + float64(height)/2,
 		p.z,
 	}
 }
 
 func perspective(p point) point {
-	if p.z >= 5 {
-		return point{
-			p.x,
-			p.y,
-			0,
-		}
-	}
-	z := (3 / (5 - p.z))
+	distance := float64(width) / 2
+	zdelta := distance / (distance + p.z)
 	return point{
-		p.x * z,
-		p.y * z,
+		p.x * zdelta,
+		p.y * zdelta,
 		0,
 	}
 }

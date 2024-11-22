@@ -9,10 +9,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-var height = 1000
-var width = 1000
-
-type point struct {
+type vec struct {
 	x float64
 	y float64
 	z float64
@@ -23,7 +20,13 @@ type line struct {
 	p2 int
 }
 
-var points = []point{}
+const height = 1000
+
+const width = 1000
+
+const focal = float64(1)
+
+var vecs = []vec{}
 
 var lines = []line{}
 
@@ -47,15 +50,15 @@ func init() {
 }
 
 func addCuboid(x1, y1, z1, x2, y2, z2 float64) {
-	i := len(points)
-	points = append(points, point{x1, y1, z1})
-	points = append(points, point{x2, y1, z1})
-	points = append(points, point{x2, y2, z1})
-	points = append(points, point{x1, y2, z1})
-	points = append(points, point{x1, y1, z2})
-	points = append(points, point{x2, y1, z2})
-	points = append(points, point{x2, y2, z2})
-	points = append(points, point{x1, y2, z2})
+	i := len(vecs)
+	vecs = append(vecs, vec{x1, y1, z1})
+	vecs = append(vecs, vec{x2, y1, z1})
+	vecs = append(vecs, vec{x2, y2, z1})
+	vecs = append(vecs, vec{x1, y2, z1})
+	vecs = append(vecs, vec{x1, y1, z2})
+	vecs = append(vecs, vec{x2, y1, z2})
+	vecs = append(vecs, vec{x2, y2, z2})
+	vecs = append(vecs, vec{x1, y2, z2})
 	lines = append(lines, line{i, i + 1})
 	lines = append(lines, line{i + 1, i + 2})
 	lines = append(lines, line{i + 2, i + 3})
@@ -75,19 +78,19 @@ func frame() *imdraw.IMDraw {
 	imd := imdraw.New(nil)
 	imd.Color = colornames.Lawngreen
 
-	updatedPoints := []point{}
-	for _, point := range points {
-		point = rotateX(point, xangle)
-		point = rotateY(point, yangle)
-		point = rotateZ(point, zangle)
-		point = perspective(point)
-		point = center(point)
-		updatedPoints = append(updatedPoints, point)
+	updated := []vec{}
+	for _, vec := range vecs {
+		vec = rotateX(vec, xangle)
+		vec = rotateY(vec, yangle)
+		vec = rotateZ(vec, zangle)
+		vec = perspective(vec)
+		vec = center(vec)
+		updated = append(updated, vec)
 	}
 
 	for _, line := range lines {
-		p1 := updatedPoints[line.p1]
-		p2 := updatedPoints[line.p2]
+		p1 := updated[line.p1]
+		p2 := updated[line.p2]
 
 		imd.Push(pixel.V(p1.x, p1.y))
 		imd.Push(pixel.V(p2.x, p2.y))
@@ -102,48 +105,48 @@ func frame() *imdraw.IMDraw {
 	return imd
 }
 
-func center(p point) point {
-	return point{
+func center(p vec) vec {
+	return vec{
 		p.x + float64(width)/2,
 		p.y + float64(height)/2,
 		p.z,
 	}
 }
 
-func perspective(p point) point {
+func perspective(p vec) vec {
 	distance := float64(width) / 2
 	zdelta := distance / (distance + p.z)
-	return point{
+	return vec{
 		p.x * zdelta,
 		p.y * zdelta,
 		0,
 	}
 }
 
-func rotateX(p point, theta float64) point {
+func rotateX(p vec, theta float64) vec {
 	sin := math.Sin(theta)
 	cos := math.Cos(theta)
-	return point{
+	return vec{
 		p.x,
 		p.y*cos - p.z*sin,
 		p.y*sin + p.z*cos,
 	}
 }
 
-func rotateY(p point, theta float64) point {
+func rotateY(p vec, theta float64) vec {
 	sin := math.Sin(theta)
 	cos := math.Cos(theta)
-	return point{
+	return vec{
 		p.x*cos - p.z*sin,
 		p.y,
 		p.x*sin + p.z*cos,
 	}
 }
 
-func rotateZ(p point, theta float64) point {
+func rotateZ(p vec, theta float64) vec {
 	sin := math.Sin(theta)
 	cos := math.Cos(theta)
-	return point{
+	return vec{
 		p.x,
 		p.y*cos - p.z*sin,
 		p.y*sin + p.z*cos,

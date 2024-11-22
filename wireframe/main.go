@@ -83,19 +83,21 @@ func frame() *imdraw.IMDraw {
 		vec = rotateX(vec, xangle)
 		vec = rotateY(vec, yangle)
 		vec = rotateZ(vec, zangle)
-		vec = perspective(vec)
-		vec = center(vec)
+		vec = translate(vec)
+		vec = projection(vec)
 		updated = append(updated, vec)
 	}
 
 	for _, line := range lines {
 		p1 := updated[line.p1]
+		p1x := (p1.x + 1) * float64(width) / 2
+		p1y := (p1.y + 1) * float64(height) / 2
 		p2 := updated[line.p2]
-
-		imd.Push(pixel.V(p1.x, p1.y))
-		imd.Push(pixel.V(p2.x, p2.y))
+		p2x := (p2.x + 1) * float64(width) / 2
+		p2y := (p2.y + 1) * float64(height) / 2
+		imd.Push(pixel.V(p1x, p1y))
+		imd.Push(pixel.V(p2x, p2y))
 		imd.Line(2)
-
 	}
 
 	xangle += 0.003
@@ -105,20 +107,19 @@ func frame() *imdraw.IMDraw {
 	return imd
 }
 
-func center(p vec) vec {
+func translate(p vec) vec {
 	return vec{
-		p.x + float64(width)/2,
-		p.y + float64(height)/2,
-		p.z,
+		p.x,
+		p.y,
+		p.z + 1000,
 	}
 }
 
-func perspective(p vec) vec {
-	distance := float64(width) / 2
-	zdelta := distance / (distance + p.z)
+func projection(p vec) vec {
+	zoffset := focal / (focal + p.z)
 	return vec{
-		p.x * zdelta,
-		p.y * zdelta,
+		p.x * zoffset,
+		p.y * zoffset,
 		0,
 	}
 }

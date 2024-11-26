@@ -1,4 +1,4 @@
-package main
+package raster
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gopxl/pixel/v2"
-	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
 	"golang.org/x/image/colornames"
 )
@@ -24,10 +23,6 @@ type triangle struct {
 	b int
 	c int
 }
-
-const height = 1000
-
-const width = 1000
 
 const focal = float64(1)
 
@@ -48,7 +43,7 @@ func init() {
 	resetCamera()
 }
 
-func frame() *imdraw.IMDraw {
+func Frame(width, height int) *imdraw.IMDraw {
 
 	imd := imdraw.New(nil)
 	imd.Color = colornames.Lawngreen
@@ -215,32 +210,4 @@ func parseInt(s string) int {
 		panic(err)
 	}
 	return int(i)
-}
-
-func run() {
-	cfg := opengl.WindowConfig{
-		Bounds:      pixel.R(0, 0, float64(width), float64(height)),
-		VSync:       true,
-		Undecorated: true,
-	}
-
-	// cfg.Monitor = opengl.PrimaryMonitor() // fullscreen
-
-	win, err := opengl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	for !win.Closed() {
-		if win.JustPressed(pixel.KeyEscape) || win.JustPressed(pixel.KeyQ) {
-			return
-		}
-		win.Clear(colornames.Black)
-		frame().Draw(win)
-		win.Update()
-	}
-}
-
-func main() {
-	opengl.Run(run)
 }

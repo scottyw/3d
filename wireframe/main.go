@@ -26,6 +26,8 @@ const width = 1000
 
 const focal = float64(1)
 
+var camPos = vec{-50, 50, -1000}
+
 var vecs = []vec{}
 
 var lines = []line{}
@@ -109,9 +111,9 @@ func frame() *imdraw.IMDraw {
 
 func translate(p vec) vec {
 	return vec{
-		p.x,
-		p.y,
-		p.z + 1000,
+		p.x - camPos.x,
+		p.y - camPos.y,
+		p.z - camPos.z,
 	}
 }
 

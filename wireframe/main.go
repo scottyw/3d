@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"math"
+	"os"
+	"strconv"
+	"strings"
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
@@ -26,7 +30,7 @@ const width = 1000
 
 const focal = float64(1)
 
-var camPos = vec{-50, 50, -1000}
+var camPos = vec{0, 0, -10}
 
 var vecs = []vec{}
 
@@ -39,40 +43,8 @@ var yangle = float64(0)
 var zangle = float64(0)
 
 func init() {
-	addCuboid(-100, -100, -100, 100, 100, 100)
-
-	addCuboid(200, -100, -100, 300, 100, 100)
-	addCuboid(-100, 200, -100, 100, 300, 100)
-	addCuboid(-100, -100, 200, 100, 100, 300)
-
-	addCuboid(-200, -100, -100, -300, 100, 100)
-	addCuboid(-100, -200, -100, 100, -300, 100)
-	addCuboid(-100, -100, -200, 100, 100, -300)
-
-}
-
-func addCuboid(x1, y1, z1, x2, y2, z2 float64) {
-	i := len(vecs)
-	vecs = append(vecs, vec{x1, y1, z1})
-	vecs = append(vecs, vec{x2, y1, z1})
-	vecs = append(vecs, vec{x2, y2, z1})
-	vecs = append(vecs, vec{x1, y2, z1})
-	vecs = append(vecs, vec{x1, y1, z2})
-	vecs = append(vecs, vec{x2, y1, z2})
-	vecs = append(vecs, vec{x2, y2, z2})
-	vecs = append(vecs, vec{x1, y2, z2})
-	lines = append(lines, line{i, i + 1})
-	lines = append(lines, line{i + 1, i + 2})
-	lines = append(lines, line{i + 2, i + 3})
-	lines = append(lines, line{i + 3, i + 0})
-	lines = append(lines, line{i + 4, i + 5})
-	lines = append(lines, line{i + 5, i + 6})
-	lines = append(lines, line{i + 6, i + 7})
-	lines = append(lines, line{i + 7, i + 4})
-	lines = append(lines, line{i + 0, i + 4})
-	lines = append(lines, line{i + 1, i + 5})
-	lines = append(lines, line{i + 2, i + 6})
-	lines = append(lines, line{i + 3, i + 7})
+	loadFile("examples/fsu.edu/icosahedron.obj")
+	resetCamera()
 }
 
 func frame() *imdraw.IMDraw {
@@ -154,6 +126,91 @@ func rotateZ(p vec, theta float64) vec {
 		p.y*cos - p.z*sin,
 		p.y*sin + p.z*cos,
 	}
+}
+
+func resetCamera() {
+	minX := math.MaxFloat64
+	minY := math.MaxFloat64
+	maxX := -math.MaxFloat64
+	maxY := -math.MaxFloat64
+	for _, vec := range vecs {
+		minX = math.Min(minX, vec.x)
+		minY = math.Min(minY, vec.y)
+		maxX = math.Max(maxX, vec.x)
+		maxY = math.Max(maxY, vec.y)
+	}
+	widthX := maxX - minX
+	widthY := maxY - minY
+	camPos = vec{minX + widthX/2, minY + widthY/2, -math.Max(widthX, widthY)}
+}
+
+func loadFile(name string) {
+
+	bs, err := os.ReadFile(name)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, row := range strings.Split(string(bs), "\n") {
+
+		if strings.HasPrefix(row, "#") {
+			continue
+		}
+
+		fields := strings.Fields(row)
+		if len(fields) == 0 {
+			continue
+		}
+
+		switch fields[0] {
+
+		case "v":
+			if len(fields) != 4 {
+				panic(row)
+			}
+
+			x := parseFloat(fields[1])
+			y := parseFloat(fields[2])
+			z := parseFloat(fields[3])
+
+			vecs = append(vecs, vec{x, y, z})
+
+		case "f":
+
+			if len(fields) != 4 {
+				panic(row)
+			}
+
+			a := parseInt(fields[1])
+			b := parseInt(fields[2])
+			c := parseInt(fields[3])
+			lines = append(lines, line{a - 1, b - 1})
+			lines = append(lines, line{b - 1, c - 1})
+			lines = append(lines, line{c - 1, a - 1})
+
+		default:
+			fmt.Println("ignoring:", row)
+
+		}
+
+	}
+
+}
+
+func parseFloat(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func parseInt(s string) int {
+	i, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	return int(i)
 }
 
 func run() {

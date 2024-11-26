@@ -19,9 +19,10 @@ type vec struct {
 	z float64
 }
 
-type line struct {
-	p1 int
-	p2 int
+type triangle struct {
+	a int
+	b int
+	c int
 }
 
 const height = 1000
@@ -34,7 +35,7 @@ var camPos = vec{0, 0, -10}
 
 var vecs = []vec{}
 
-var lines = []line{}
+var triangles = []triangle{}
 
 var xangle = float64(0)
 
@@ -62,16 +63,20 @@ func frame() *imdraw.IMDraw {
 		updated = append(updated, vec)
 	}
 
-	for _, line := range lines {
-		p1 := updated[line.p1]
-		p1x := (p1.x + 1) * float64(width) / 2
-		p1y := (p1.y + 1) * float64(height) / 2
-		p2 := updated[line.p2]
-		p2x := (p2.x + 1) * float64(width) / 2
-		p2y := (p2.y + 1) * float64(height) / 2
-		imd.Push(pixel.V(p1x, p1y))
-		imd.Push(pixel.V(p2x, p2y))
-		imd.Line(2)
+	for _, triangle := range triangles {
+		a := updated[triangle.a]
+		ax := (a.x + 1) * float64(width) / 2
+		ay := (a.y + 1) * float64(height) / 2
+		b := updated[triangle.b]
+		bx := (b.x + 1) * float64(width) / 2
+		by := (b.y + 1) * float64(height) / 2
+		c := updated[triangle.c]
+		cx := (c.x + 1) * float64(width) / 2
+		cy := (c.y + 1) * float64(height) / 2
+		imd.Push(pixel.V(ax, ay))
+		imd.Push(pixel.V(bx, by))
+		imd.Push(pixel.V(cx, cy))
+		imd.Polygon(2)
 	}
 
 	xangle += 0.003
@@ -184,9 +189,8 @@ func loadFile(name string) {
 			a := parseInt(fields[1])
 			b := parseInt(fields[2])
 			c := parseInt(fields[3])
-			lines = append(lines, line{a - 1, b - 1})
-			lines = append(lines, line{b - 1, c - 1})
-			lines = append(lines, line{c - 1, a - 1})
+
+			triangles = append(triangles, triangle{a - 1, b - 1, c - 1})
 
 		default:
 			fmt.Println("ignoring:", row)

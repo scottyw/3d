@@ -26,9 +26,26 @@ func run() {
 	}
 
 	for !win.Closed() {
-		if win.JustPressed(pixel.KeyEscape) || win.JustPressed(pixel.KeyQ) {
+		if win.JustPressed(pixel.KeyEscape) {
 			return
 		}
+
+		switch {
+		case win.Pressed(pixel.KeyW):
+			raster.Forward()
+		case win.Pressed(pixel.KeyS):
+			raster.Back()
+		case win.Pressed(pixel.KeyD):
+			raster.Right()
+		case win.Pressed(pixel.KeyA):
+			raster.Left()
+		case win.Pressed(pixel.KeyQ):
+			raster.Up()
+		case win.Pressed(pixel.KeyE):
+			raster.Down()
+
+		}
+
 		win.Clear(colornames.Black)
 		raster.Frame(width, height).Draw(win)
 		win.Update()

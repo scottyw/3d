@@ -42,7 +42,7 @@ const focal = float64(1)
 
 var camPos = vec{0, 0, -20}
 
-var camDir = normalize(vec{0, 0, 0})
+var camDir = normalize(sub(vec{0, 0, 0}, camPos))
 
 var vecs = []vec{}
 
@@ -56,6 +56,28 @@ func init() {
 }
 
 func Frame(width, height int) *imdraw.IMDraw {
+
+	right := normalize(cross(vec{0, 1, 0}, camDir))
+
+	up := cross(camDir, right)
+
+	lookAt := m4{
+		right.x, right.y, right.z, 0,
+		up.x, up.y, up.z, 0,
+		camDir.x, camDir.y, camDir.z, 0,
+		0, 0, 0, 1,
+	}
+
+	lookAt = multiply(lookAt, m4{
+		1, 0, 0, -camPos.x,
+		0, 1, 0, -camPos.y,
+		0, 0, 1, -camPos.z,
+		0, 0, 0, 1,
+	})
+
+	// fmt.Println("dir", dir)
+	// fmt.Println("right", right)
+	// fmt.Println("up", up)
 
 	// rotateX := m4{
 	// 	1, 0, 0, 0,
@@ -81,11 +103,12 @@ func Frame(width, height int) *imdraw.IMDraw {
 	updated := []vec{}
 	for _, v := range vecs {
 		v4 := vec4{v.x, v.y, v.z, 1}
+		v4 = matrix(lookAt, v4)
 		// v4 = matrix(rotateX, v4)
 		// v4 = matrix(rotateY, v4)
 		// v4 = matrix(rotateZ, v4)
 		v = vec{v4.x, v4.y, v4.z}
-		v = sub(v, camPos)
+		// v = sub(v, camPos)
 		v = projection(v)
 		updated = append(updated, v)
 	}
@@ -162,7 +185,7 @@ func resetCamera() {
 	widthX := maxX - minX
 	widthY := maxY - minY
 	camPos = vec{minX + widthX/2, minY + widthY/2, -math.Max(widthX, widthY)}
-	camDir = normalize(sub(vec{0, 0, 0}, camPos))
+	// camDir = normalize(sub(vec{0, 0, 0}, camPos))
 }
 
 func loadFile(name string) {
@@ -278,6 +301,27 @@ func matrix(m m4, v vec4) vec4 {
 		m.m10*v.x + m.m11*v.y + m.m12*v.z + m.m13*v.w,
 		m.m20*v.x + m.m21*v.y + m.m22*v.z + m.m23*v.w,
 		m.m30*v.x + m.m31*v.y + m.m32*v.z + m.m33*v.w,
+	}
+}
+
+func multiply(m, m2 m4) m4 {
+	return m4{
+		m00: m.m00*m2.m00 + m.m01*m2.m10 + m.m02*m2.m20 + m.m03*m2.m30,
+		m01: m.m00*m2.m01 + m.m01*m2.m11 + m.m02*m2.m21 + m.m03*m2.m31,
+		m02: m.m00*m2.m02 + m.m01*m2.m12 + m.m02*m2.m22 + m.m03*m2.m32,
+		m03: m.m00*m2.m03 + m.m01*m2.m13 + m.m02*m2.m23 + m.m03*m2.m33,
+		m10: m.m10*m2.m00 + m.m11*m2.m10 + m.m12*m2.m20 + m.m13*m2.m30,
+		m11: m.m10*m2.m01 + m.m11*m2.m11 + m.m12*m2.m21 + m.m13*m2.m31,
+		m12: m.m10*m2.m02 + m.m11*m2.m12 + m.m12*m2.m22 + m.m13*m2.m32,
+		m13: m.m10*m2.m03 + m.m11*m2.m13 + m.m12*m2.m23 + m.m13*m2.m33,
+		m20: m.m20*m2.m00 + m.m21*m2.m10 + m.m22*m2.m20 + m.m23*m2.m30,
+		m21: m.m20*m2.m01 + m.m21*m2.m11 + m.m22*m2.m21 + m.m23*m2.m31,
+		m22: m.m20*m2.m02 + m.m21*m2.m12 + m.m22*m2.m22 + m.m23*m2.m32,
+		m23: m.m20*m2.m03 + m.m21*m2.m13 + m.m22*m2.m23 + m.m23*m2.m33,
+		m30: m.m30*m2.m00 + m.m31*m2.m10 + m.m32*m2.m20 + m.m33*m2.m30,
+		m31: m.m30*m2.m01 + m.m31*m2.m11 + m.m32*m2.m21 + m.m33*m2.m31,
+		m32: m.m30*m2.m02 + m.m31*m2.m12 + m.m32*m2.m22 + m.m33*m2.m32,
+		m33: m.m30*m2.m03 + m.m31*m2.m13 + m.m32*m2.m23 + m.m33*m2.m33,
 	}
 }
 

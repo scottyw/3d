@@ -40,9 +40,9 @@ type triangle struct {
 
 const focal = float64(1)
 
-var camPos = vec{0, 0, -20}
+var camPos vec
 
-var camDir = normalize(sub(vec{0, 0, 0}, camPos))
+var camDir vec
 
 var vecs = []vec{}
 
@@ -52,7 +52,7 @@ var normals = []vec{}
 
 func init() {
 	loadFile("examples/axis.obj")
-	// resetCamera()
+	resetCamera()
 }
 
 func Frame(width, height int) *imdraw.IMDraw {
@@ -75,42 +75,12 @@ func Frame(width, height int) *imdraw.IMDraw {
 		0, 0, 0, 1,
 	})
 
-	// fmt.Println("dir", dir)
-	// fmt.Println("right", right)
-	// fmt.Println("up", up)
-
-	// rotateX := m4{
-	// 	1, 0, 0, 0,
-	// 	0, (1 - camDir.z), -camDir.z, 0,
-	// 	0, camDir.z, (1 - camDir.z), 0,
-	// 	0, 0, 0, 1,
-	// }
-
-	// rotateY := m4{
-	// 	(1 - camDir.x), 0, -camDir.x, 0,
-	// 	0, 1, 0, 0,
-	// 	camDir.x, 0, (1 - camDir.x), 0,
-	// 	0, 0, 0, 1,
-	// }
-
-	// rotateZ := m4{
-	// 	(1 - camDir.y), -camDir.y, 0, 0,
-	// 	camDir.y, (1 - camDir.y), 0, 0,
-	// 	0, 0, 1, 0,
-	// 	0, 0, 0, 1,
-	// }
-
-	updated := []vec{}
+	updated := []vec4{}
 	for _, v := range vecs {
 		v4 := vec4{v.x, v.y, v.z, 1}
 		v4 = matrix(lookAt, v4)
-		// v4 = matrix(rotateX, v4)
-		// v4 = matrix(rotateY, v4)
-		// v4 = matrix(rotateZ, v4)
-		v = vec{v4.x, v4.y, v4.z}
-		// v = sub(v, camPos)
-		v = projection(v)
-		updated = append(updated, v)
+		v4 = projection(v4)
+		updated = append(updated, v4)
 	}
 
 	imd := imdraw.New(nil)
@@ -137,12 +107,11 @@ func Frame(width, height int) *imdraw.IMDraw {
 	return imd
 }
 
-func projection(p vec) vec {
+func projection(p vec4) vec4 {
 	zoffset := focal / (focal + p.z)
-	return vec{
-		p.x * zoffset,
-		p.y * zoffset,
-		0,
+	return vec4{
+		x: p.x * zoffset,
+		y: p.y * zoffset,
 	}
 }
 
@@ -166,11 +135,6 @@ func rotateY(p vec, theta float64) vec {
 	}
 }
 
-func rotateZ(p vec, theta float64) vec {
-	//FIXME
-	return p
-}
-
 func resetCamera() {
 	minX := math.MaxFloat64
 	minY := math.MaxFloat64
@@ -185,7 +149,7 @@ func resetCamera() {
 	widthX := maxX - minX
 	widthY := maxY - minY
 	camPos = vec{minX + widthX/2, minY + widthY/2, -math.Max(widthX, widthY)}
-	// camDir = normalize(sub(vec{0, 0, 0}, camPos))
+	camDir = normalize(sub(vec{0, 0, 0}, camPos))
 }
 
 func loadFile(name string) {
@@ -383,20 +347,36 @@ func Down() {
 	camPos.y -= step
 }
 
-func Right() {
-	camPos.x += step
+func StrafeRight() {
+	right := normalize(cross(vec{0, 1, 0}, camDir))
+	camPos = add(camPos, right)
 }
 
-func Left() {
-	camPos.x -= step
+func StrafeLeft() {
+	right := normalize(cross(vec{0, 1, 0}, camDir))
+	camPos = sub(camPos, right)
+}
+
+func TurnRight() {
+	theta := math.Atan(camDir.x / camDir.z)
+	theta += 0.01
+	camDir.x = math.Sin(theta)
+	camDir.z = math.Cos(theta)
+}
+
+func TurnLeft() {
+	theta := math.Atan(camDir.x / camDir.z)
+	theta -= 0.01
+	camDir.x = math.Sin(theta)
+	camDir.z = math.Cos(theta)
 }
 
 func Forward() {
-	camPos.z += step
+	camPos = add(camPos, camDir)
 }
 
 func Back() {
-	camPos.z -= step
+	camPos = sub(camPos, camDir)
 }
 
 var step = 0.1

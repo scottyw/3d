@@ -41,7 +41,7 @@ var yangle = float64(0)
 var zangle = float64(0)
 
 func init() {
-	loadFile("examples/fsu.edu/icosahedron.obj")
+	loadFile("examples/fsu.edu/teapot.obj")
 	resetCamera()
 }
 
@@ -143,7 +143,7 @@ func resetCamera() {
 	}
 	widthX := maxX - minX
 	widthY := maxY - minY
-	camPos = vec{minX + widthX/2, minY + widthY/2, -math.Max(widthX, widthY)}
+	camPos = vec{minX + widthX/2, minY + widthY/2, -1.2 * math.Max(widthX, widthY)}
 }
 
 func loadFile(name string) {

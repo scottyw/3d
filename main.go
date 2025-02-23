@@ -31,27 +31,14 @@ func run() {
 		}
 
 		switch {
-		case win.Pressed(pixel.KeyW):
-			raster.Forward()
-		case win.Pressed(pixel.KeyS):
-			raster.Back()
 		case win.Pressed(pixel.KeyUp):
-			raster.Forward()
-		case win.Pressed(pixel.KeyDown):
-			raster.Back()
-		case win.Pressed(pixel.KeyD):
-			raster.StrafeRight()
-		case win.Pressed(pixel.KeyA):
-			raster.StrafeLeft()
-		case win.Pressed(pixel.KeyRight):
-			raster.TurnRight()
-		case win.Pressed(pixel.KeyLeft):
-			raster.TurnLeft()
-		case win.Pressed(pixel.KeyQ):
 			raster.Up()
-		case win.Pressed(pixel.KeyE):
+		case win.Pressed(pixel.KeyDown):
 			raster.Down()
-
+		case win.Pressed(pixel.KeyRight):
+			raster.Right()
+		case win.Pressed(pixel.KeyLeft):
+			raster.Left()
 		}
 
 		win.Clear(colornames.Black)

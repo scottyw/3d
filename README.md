@@ -4,7 +4,7 @@ A CPU-only wireframe renderer.
 
 You can run it like this:
 ```
-go run wireframe/main.go
+go run main.go
 ```
 
 ![image](https://github.com/user-attachments/assets/1d39510f-9c59-40b9-8124-a8ff3c1cf336)

@@ -1,10 +1,11 @@
 package main
 
 import (
+	"image/color"
+
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/backends/opengl"
 	"github.com/scottyw/3d/raster"
-	"golang.org/x/image/colornames"
 )
 
 const height = 1000
@@ -29,19 +30,7 @@ func run() {
 		if win.JustPressed(pixel.KeyEscape) {
 			return
 		}
-
-		switch {
-		case win.Pressed(pixel.KeyUp):
-			raster.Up()
-		case win.Pressed(pixel.KeyDown):
-			raster.Down()
-		case win.Pressed(pixel.KeyRight):
-			raster.Right()
-		case win.Pressed(pixel.KeyLeft):
-			raster.Left()
-		}
-
-		win.Clear(colornames.Black)
+		win.Clear(color.RGBA{0x20, 0x20, 0x20, 0xff})
 		raster.Frame(width, height).Draw(win)
 		win.Update()
 	}

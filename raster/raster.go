@@ -78,6 +78,8 @@ func Frame(width, height int) *imdraw.IMDraw {
 		// }
 	}
 
+	yangle += 0.01
+
 	return imd
 }
 
@@ -244,21 +246,4 @@ func length(a vec) float64 {
 func normalize(a vec) vec {
 	l := length(a)
 	return vec{a.x / l, a.y / l, a.z / l}
-}
-
-func Right() {
-	yangle += 0.01
-}
-
-func Left() {
-	yangle -= 0.01
-}
-
-func Up() {
-	xangle += 0.01
-}
-
-func Down() {
-	xangle -= 0.01
-
 }

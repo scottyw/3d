@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -68,19 +69,19 @@ func Frame(width, height int) *imdraw.IMDraw {
 		updated = append(updated, vec)
 	}
 
-	// // Sort triangles by Z position
-	// slices.SortStableFunc(triangles, func(a, b triangle) int {
-	// 	centreA := centre(a, updated)
-	// 	centreB := centre(b, updated)
-	// 	diff := centreB.z - centreA.z
-	// 	if diff == 0 {
-	// 		return 0
-	// 	}
-	// 	if diff < 0 {
-	// 		return -1
-	// 	}
-	// 	return 1
-	// })
+	// Sort triangles by Z position
+	slices.SortStableFunc(triangles, func(a, b triangle) int {
+		centreA := centre(a, updated)
+		centreB := centre(b, updated)
+		diff := centreB.z - centreA.z
+		if diff == 0 {
+			return 0
+		}
+		if diff < 0 {
+			return -1
+		}
+		return 1
+	})
 
 	// Render each triangle of the loaded scene
 	for _, triangle := range triangles {
@@ -103,19 +104,13 @@ func Frame(width, height int) *imdraw.IMDraw {
 		// Draw the triangle onscreen
 
 		normal := findNormal(triangle, updated)
-
 		light := dot(lightSource, normal)
+		brightness := uint8(0x80 - (light * 0x60))
+		imd.Color = color.RGBA{brightness, brightness, brightness, 0xff}
 
 		imd.Push(pixel.V(ax, ay))
 		imd.Push(pixel.V(bx, by))
 		imd.Push(pixel.V(cx, cy))
-
-		brightness := uint8((light * 0x20) + 0x80)
-
-		// cam := dot(cameraDirection, normal)
-
-		imd.Color = color.RGBA{brightness, brightness, brightness, 0xff}
-
 		imd.Polygon(0)
 
 	}
@@ -166,9 +161,9 @@ func rotateZ(p vec, theta float64) vec {
 	sin := math.Sin(theta)
 	cos := math.Cos(theta)
 	return vec{
-		p.x,
-		p.y*cos - p.z*sin,
-		p.y*sin + p.z*cos,
+		p.x*cos - p.y*sin,
+		p.x*sin + p.y*cos,
+		p.z,
 	}
 }
 
@@ -185,7 +180,7 @@ func resetCameraPosition() {
 	}
 	widthX := maxX - minX
 	widthY := maxY - minY
-	cameraPosition = vec{minX + widthX/2, minY + widthY/2, -1.2 * math.Max(widthX, widthY)}
+	cameraPosition = vec{minX + (widthX * 0.5), minY + (widthY * 0.75), -1.2 * math.Max(widthX, widthY)}
 }
 
 func loadFile(name string) {

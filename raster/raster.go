@@ -12,6 +12,11 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+type vec2 struct {
+	x float64
+	y float64
+}
+
 type vec struct {
 	x float64
 	y float64
@@ -26,7 +31,11 @@ type triangle struct {
 
 const focal = float64(1)
 
-var camPos vec
+// Camera always points directly into the Z axis
+var cameraPosition vec
+
+// Light source is infinitely far away and points in this direction
+var lightSource = vec{1, -1, 1}
 
 var vecs = []vec{}
 
@@ -42,7 +51,7 @@ var zangle = float64(0)
 
 func init() {
 	loadFile("examples/fsu.edu/teapot.obj")
-	resetCamera()
+	resetCameraPosition()
 }
 
 func Frame(width, height int) *imdraw.IMDraw {
@@ -50,27 +59,37 @@ func Frame(width, height int) *imdraw.IMDraw {
 	imd := imdraw.New(nil)
 	imd.Color = colornames.Lawngreen
 
+	// Rotate and translate each vertex of the loaded scene in world space
 	updated := []vec{}
 	for _, vec := range vecs {
 		vec = rotateX(vec, xangle)
 		vec = rotateY(vec, yangle)
 		vec = rotateZ(vec, zangle)
-		vec = translate(vec)
-		vec = projection(vec)
+		vec = translateRelativeToCamera(vec)
 		updated = append(updated, vec)
 	}
 
+	// Render each triangle of the loaded scene
 	for _, triangle := range triangles {
-		a := updated[triangle.a]
+
+		// Project this triangle's "a" vertex onto the 2D plane
+		a := projectInto2D(updated[triangle.a])
 		ax := (a.x + 1) * float64(width) / 2
 		ay := (a.y + 1) * float64(height) / 2
-		b := updated[triangle.b]
+
+		// Project this triangle's "b" vertex onto the 2D plane
+		b := projectInto2D(updated[triangle.b])
 		bx := (b.x + 1) * float64(width) / 2
 		by := (b.y + 1) * float64(height) / 2
-		c := updated[triangle.c]
+
+		// Project this triangle's "c" vertex onto the 2D plane
+		c := projectInto2D(updated[triangle.c])
 		cx := (c.x + 1) * float64(width) / 2
 		cy := (c.y + 1) * float64(height) / 2
+
+		// Draw the triangle onscreen
 		// if normals[i].z >= 0 {
+
 		imd.Push(pixel.V(ax, ay))
 		imd.Push(pixel.V(bx, by))
 		imd.Push(pixel.V(cx, cy))
@@ -78,25 +97,25 @@ func Frame(width, height int) *imdraw.IMDraw {
 		// }
 	}
 
+	// Rotate the loaded scene
 	yangle += 0.01
 
 	return imd
 }
 
-func translate(p vec) vec {
-	return vec{
-		p.x - camPos.x,
-		p.y - camPos.y,
-		p.z - camPos.z,
+func projectInto2D(p vec) vec2 {
+	zoffset := focal / (focal + p.z)
+	return vec2{
+		p.x * zoffset,
+		p.y * zoffset,
 	}
 }
 
-func projection(p vec) vec {
-	zoffset := focal / (focal + p.z)
+func translateRelativeToCamera(p vec) vec {
 	return vec{
-		p.x * zoffset,
-		p.y * zoffset,
-		0,
+		p.x - cameraPosition.x,
+		p.y - cameraPosition.y,
+		p.z - cameraPosition.z,
 	}
 }
 
@@ -130,7 +149,7 @@ func rotateZ(p vec, theta float64) vec {
 	}
 }
 
-func resetCamera() {
+func resetCameraPosition() {
 	minX := math.MaxFloat64
 	minY := math.MaxFloat64
 	maxX := -math.MaxFloat64
@@ -143,7 +162,7 @@ func resetCamera() {
 	}
 	widthX := maxX - minX
 	widthY := maxY - minY
-	camPos = vec{minX + widthX/2, minY + widthY/2, -1.2 * math.Max(widthX, widthY)}
+	cameraPosition = vec{minX + widthX/2, minY + widthY/2, -1.2 * math.Max(widthX, widthY)}
 }
 
 func loadFile(name string) {

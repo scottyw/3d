@@ -2,6 +2,7 @@ package raster
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 	"os"
 	"strconv"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/gopxl/pixel/v2"
 	"github.com/gopxl/pixel/v2/ext/imdraw"
-	"golang.org/x/image/colornames"
 )
 
 type vec2 struct {
@@ -31,17 +31,17 @@ type triangle struct {
 
 const focal = float64(1)
 
-// Camera always points directly into the Z axis
 var cameraPosition vec
 
+// Camera always points directly into the Z axis
+var cameraDirection = vec{0, 0, 1}
+
 // Light source is infinitely far away and points in this direction
-var lightSource = vec{1, -1, 1}
+var lightSource = normalize(vec{1, -1, 1})
 
 var vecs = []vec{}
 
 var triangles = []triangle{}
-
-var normals = []vec{}
 
 var xangle = float64(0)
 
@@ -50,14 +50,13 @@ var yangle = float64(0)
 var zangle = float64(0)
 
 func init() {
-	loadFile("examples/fsu.edu/teapot.obj")
+	loadFile("examples/fsu.edu/icosahedron.obj")
 	resetCameraPosition()
 }
 
 func Frame(width, height int) *imdraw.IMDraw {
 
 	imd := imdraw.New(nil)
-	imd.Color = colornames.Lawngreen
 
 	// Rotate and translate each vertex of the loaded scene in world space
 	updated := []vec{}
@@ -68,6 +67,20 @@ func Frame(width, height int) *imdraw.IMDraw {
 		vec = translateRelativeToCamera(vec)
 		updated = append(updated, vec)
 	}
+
+	// // Sort triangles by Z position
+	// slices.SortStableFunc(triangles, func(a, b triangle) int {
+	// 	centreA := centre(a, updated)
+	// 	centreB := centre(b, updated)
+	// 	diff := centreB.z - centreA.z
+	// 	if diff == 0 {
+	// 		return 0
+	// 	}
+	// 	if diff < 0 {
+	// 		return -1
+	// 	}
+	// 	return 1
+	// })
 
 	// Render each triangle of the loaded scene
 	for _, triangle := range triangles {
@@ -88,17 +101,27 @@ func Frame(width, height int) *imdraw.IMDraw {
 		cy := (c.y + 1) * float64(height) / 2
 
 		// Draw the triangle onscreen
-		// if normals[i].z >= 0 {
+
+		normal := findNormal(triangle, updated)
+
+		light := dot(lightSource, normal)
 
 		imd.Push(pixel.V(ax, ay))
 		imd.Push(pixel.V(bx, by))
 		imd.Push(pixel.V(cx, cy))
-		imd.Polygon(2)
-		// }
+
+		brightness := uint8((light * 0x20) + 0x80)
+
+		// cam := dot(cameraDirection, normal)
+
+		imd.Color = color.RGBA{brightness, brightness, brightness, 0xff}
+
+		imd.Polygon(0)
+
 	}
 
 	// Rotate the loaded scene
-	yangle += 0.01
+	yangle += 0.005
 
 	return imd
 }
@@ -208,7 +231,6 @@ func loadFile(name string) {
 
 			t := triangle{a - 1, b - 1, c - 1}
 			triangles = append(triangles, t)
-			normals = append(normals, findNormal(t))
 
 		default:
 			fmt.Println("ignoring:", row)
@@ -235,11 +257,22 @@ func parseInt(s string) int {
 	return int(i)
 }
 
-func findNormal(t triangle) vec {
+func findNormal(t triangle, vecs []vec) vec {
 	ba := sub(vecs[t.b], vecs[t.a])
 	ca := sub(vecs[t.c], vecs[t.a])
 	cross := cross(ba, ca)
 	return normalize(cross)
+}
+
+func centre(t triangle, vecs []vec) vec {
+	v1 := vecs[t.a]
+	v2 := vecs[t.b]
+	v3 := vecs[t.c]
+	return vec{
+		(v1.x + v2.x + v3.x) / 3,
+		(v1.y + v2.y + v3.y) / 3,
+		(v1.z + v2.z + v3.z) / 3,
+	}
 }
 
 func sub(a, b vec) vec {

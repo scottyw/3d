@@ -2,10 +2,7 @@ module github.com/scottyw/3d
 
 go 1.23
 
-require (
-	github.com/gopxl/pixel/v2 v2.3.0
-	golang.org/x/image v0.19.0
-)
+require github.com/gopxl/pixel/v2 v2.3.0
 
 require (
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
@@ -14,4 +11,5 @@ require (
 	github.com/gopxl/glhf/v2 v2.0.0 // indirect
 	github.com/gopxl/mainthread/v2 v2.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	golang.org/x/image v0.19.0 // indirect
 )

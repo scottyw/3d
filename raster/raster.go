@@ -216,16 +216,18 @@ func loadFile(name string) {
 
 		case "f":
 
-			if len(fields) != 4 {
+			if len(fields) < 4 {
 				panic(row)
 			}
 
-			a := parseInt(fields[1])
-			b := parseInt(fields[2])
-			c := parseInt(fields[3])
+			for x := 2; x < len(fields)-1; x++ {
+				a := parseInt(fields[1])
+				b := parseInt(fields[x])
+				c := parseInt(fields[x+1])
 
-			t := triangle{a - 1, b - 1, c - 1}
-			triangles = append(triangles, t)
+				t := triangle{a - 1, b - 1, c - 1}
+				triangles = append(triangles, t)
+			}
 
 		default:
 			fmt.Println("ignoring:", row)
